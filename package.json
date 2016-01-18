@@ -1,0 +1,21 @@
+{
+  "name": "wikisonnet_twitter_bot",
+  "version": "1.0.0",
+  "description": "People can tweet at the bot and it will tweet back a sonnet",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "generative",
+    "writing",
+    "poetry"
+  ],
+  "author": "Cassie Tarakajian",
+  "license": "MIT",
+  "dependencies": {
+    "request": "^2.67.0",
+    "slimerjs": "^0.9.6-2",
+    "twit": "^2.1.1"
+  }
+}
