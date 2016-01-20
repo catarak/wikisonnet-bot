@@ -4,12 +4,15 @@ var request = require('request');
 var slimerjs = require('slimerjs');
 var path = require('path');
 var childProcess = require('child_process');
+var config = require("./config.js")();
 
 var binPath = slimerjs.path;
 var childArgs = [
   path.join(__dirname, 'slimerjs-poem-image.js'),
-  '--ignore-ssl-errors=yes'
+  '--ignore-ssl-errors=yes',
+  '--wikisonnet-url=' + config.wikisonnet_url
 ]
+
 
 var twitterConfig = JSON.parse(fs.readFileSync('twitter-config.json', 'utf8'));
 var T = new Twit(twitterConfig);
@@ -17,8 +20,8 @@ var T = new Twit(twitterConfig);
 var stream = T.stream('statuses/filter', { track: 'wikisonnet' });
 
 stream.on('tweet', function (tweet) {
-	console.log(tweet);
 	if (tweet.entities.user_mentions[0].screen_name === 'wikisonnet') {
+		console.log("Got tweet: " + tweet.text);
 		//tweet.text get the rest of the text, send it to api 
 		//parse query as wikipedia page 
 		//save user to obj
@@ -30,61 +33,94 @@ stream.on('tweet', function (tweet) {
 			method: 'GET',
 			qs: {
 				action: 'opensearch',	
-				limit: '1',
+				limit: '2',
 				format: 'json',
 				search: wikiQuery
 			},
 		},
 		function(err, response, body) {
 			if(err) { console.log(err); return; }
+			console.log("Got wikipedia page: " + JSON.parse(response.body)[1][0]);
 			var poemTitle = JSON.parse(response.body)[1][0];
 			request({
-				url: "http://localhost:8000/api/v2/poems",
-				method: 'POST',
-				form: {
-					poemTitle: poemTitle
-				}
+				//format=json&action=query&prop=categories&titles=Madonna
+				url: "https://en.wikipedia.org/w/api.php",
+				method: 'GET',
+				qs: {
+					action: 'query',	
+					format: 'json',
+					prop: 'categories',
+					titles: poemTitle
+				},
 			},
-			function(err, poemResponse) {
-				if(err) { console.log(err); return; }
-				console.log(poemResponse.body);
-				var body = JSON.parse(poemResponse.body);
-				if (body.complete) {
+			function(err, categoryResponse, body) {
+				var body = JSON.parse(categoryResponse.body);
+				var key = Object.keys(body.query.pages)[0];
+				var categories = body.query.pages[key].categories;
+				categories.forEach(function(category) {
+					if (category.title.match(/(d|D)isambiguation/)) {
+						poemTitle = JSON.parse(response.body)[1][1]
+					}
+				});
+				request({
+					url: config.wikisonnet_api_url + "/api/v2/poems",
+					method: 'POST',
+					form: {
+						poemTitle: poemTitle
+					}
+				},
+				function(err, poemResponse) {
+					if(err) { console.log(err); return; }
+					console.log("Got poem from API: " + poemResponse);
+					var body = JSON.parse(poemResponse.body);
 					childArgs.push("--poem-id=" + body.id)
-					var child = childProcess.execFile(binPath, childArgs, function(err, stdout, stderr) {
-					  console.log(stdout);
-					});
+					if (body.complete) {
+						var child = childProcess.execFile(binPath, childArgs, function(err, stdout, stderr) {
+						  console.log(err);
+						  console.log(stderr);	
+						  console.log(stdout);
+						});
 
-					child.on('close', function(code) {
-					  var b64content = fs.readFileSync('./screenshot-' + body.id + '.png', { encoding: 'base64' });
+						child.on('close', function(code) {
+						  var b64content = fs.readFileSync('./screenshot-' + body.id + '.png', { encoding: 'base64' });
 
-					  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
-							var mediaIdStr = data.media_id_string;
-							var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at http://localhost:3000/poems/' + body.id; 
-						  var params = { status: status, media_ids: [mediaIdStr] }
+						  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
+								var mediaIdStr = data.media_id_string;
+								var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id; 
+							  var params = { status: status, media_ids: [mediaIdStr] }
 
-						  T.post('statuses/update', params, function (err, data, response) {
-						    console.log(data)
+							  T.post('statuses/update', params, function (err, data, response) {
+							    console.log(data);
+							    //delete screenshot from filesystem
+							  });
 						  });
-					  });
-					});
-				}
-				else {
-					// setTimeout(getPoem.bind(this, body.id, requestor), 1000);
-				}
+						});
+					}
+					else {
+						// setTimeout(getPoem.bind(this, body.id, poemTitle, requestor), 1000);
+					}
+				});
 			});
 		});
 	}
 });
 
-// function getPoem(poemId, requestor) {
-// 	request({
-// 		url: "http://localhost:8000/api/v2/poems/" + poemId,
-// 		method: 'GET'
-// 	}, 
-// 	function(err, response) {
+function getPoem(poemId, poemTitle, requestor) {
+	request({
+		url: config.wikisonnet_api_url + "/api/v2/poems/" + poemId,
+		method: 'GET'
+	}, 
+	function(err, response) {
+		if(err) { console.log(err); return; }
+		var body = JSON.parse(poemResponse.body);
+		if (body.complete) {
+			//do all of the posting stuff.
+		}
+		else {
+			setTimeout(getPoem.bind(this, body.id, poemTitle, requestor), 1000);
+		}
+	});
+}
 
-// 	});
-// }
 
 

@@ -1,5 +1,6 @@
 var page = require('webpage').create();
-var url = 'http://localhost:3000/poems/';
+
+var url;
 var system = require('system');
 var fs = require('fs');
 
@@ -30,6 +31,9 @@ args.forEach(function(arg, i) {
 	var argObj = arg.split("=");
 	if (argObj[0] === "--poem-id") {
 		poemId = argObj[1];
+	}
+	else if (argObj[0] === "--wikisonnet-url") {
+		url = argObj[1] + "/poems/"
 	}
 });
 
