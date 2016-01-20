@@ -40,6 +40,11 @@ stream.on('tweet', function (tweet) {
 		},
 		function(err, response, body) {
 			if(err) { console.log(err); return; }
+			console.log(JSON.parse(response.body)[1]);
+			if (JSON.parse(response.body)[1].length === 0) {
+				console.log("Invalid page.");
+				return;
+			}
 			console.log("Got wikipedia page: " + JSON.parse(response.body)[1][0]);
 			var poemTitle = JSON.parse(response.body)[1][0];
 			request({
