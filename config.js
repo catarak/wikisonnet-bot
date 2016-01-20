@@ -13,6 +13,9 @@ module.exports = function(){
         };
 
     default:
-        return {};
+        return {
+					wikisonnet_api_url: "http://wikison.net:8000",
+					wikisonnet_url: "http://wikison.net"
+        };
   }
 }
