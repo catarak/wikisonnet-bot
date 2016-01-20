@@ -92,12 +92,13 @@ stream.on('tweet', function (tweet) {
 							  T.post('statuses/update', params, function (err, data, response) {
 							    console.log(data);
 							    //delete screenshot from filesystem
+							    fs.unlink('./screenshot-' + body.id + '.png');
 							  });
 						  });
 						});
 					}
 					else {
-						// setTimeout(getPoem.bind(this, body.id, poemTitle, requestor), 1000);
+						setTimeout(getPoem.bind(this, body.id, poemTitle, requestor), 1000);
 					}
 				});
 			});
@@ -112,9 +113,30 @@ function getPoem(poemId, poemTitle, requestor) {
 	}, 
 	function(err, response) {
 		if(err) { console.log(err); return; }
-		var body = JSON.parse(poemResponse.body);
+		var body = JSON.parse(response.body);
 		if (body.complete) {
 			//do all of the posting stuff.
+			var child = childProcess.execFile(binPath, childArgs, function(err, stdout, stderr) {
+			  console.log(err);
+			  console.log(stderr);	
+			  console.log(stdout);
+			});
+
+			child.on('close', function(code) {
+			  var b64content = fs.readFileSync('./screenshot-' + body.id + '.png', { encoding: 'base64' });
+
+			  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
+					var mediaIdStr = data.media_id_string;
+					var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id; 
+				  var params = { status: status, media_ids: [mediaIdStr] }
+
+				  T.post('statuses/update', params, function (err, data, response) {
+				    console.log(data);
+				    //delete screenshot from filesystem
+				    fs.unlink('./screenshot-' + body.id + '.png');
+				  });
+			  });
+			});
 		}
 		else {
 			setTimeout(getPoem.bind(this, body.id, poemTitle, requestor), 1000);
