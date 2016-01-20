@@ -6,8 +6,9 @@ var path = require('path');
 var childProcess = require('child_process');
 var config = require("./config.js")();
 
-var binPath = slimerjs.path;
+var binPath = "xvfb-run";
 var childArgs = [
+	slimerjs.path,
   path.join(__dirname, 'slimerjs-poem-image.js'),
   '--ignore-ssl-errors=yes',
   '--wikisonnet-url=' + config.wikisonnet_url
