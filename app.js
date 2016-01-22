@@ -23,8 +23,8 @@ var stream = T.stream('statuses/filter', { track: 'wikisonnet' });
 stream.on('tweet', function (tweet) {
 	if (tweet.entities.user_mentions[0].screen_name === 'wikisonnet') {
 		console.log("Got tweet: " + tweet.text);
-		//tweet.text get the rest of the text, send it to api 
-		//parse query as wikipedia page 
+		//tweet.text get the rest of the text, send it to api
+		//parse query as wikipedia page
 		//save user to obj
 		//159.203.110.230:8000 for production
 		var requestor = tweet.user.screen_name;
@@ -33,7 +33,7 @@ stream.on('tweet', function (tweet) {
 			url: "https://en.wikipedia.org/w/api.php",
 			method: 'GET',
 			qs: {
-				action: 'opensearch',	
+				action: 'opensearch',
 				limit: '2',
 				format: 'json',
 				search: wikiQuery
@@ -53,7 +53,7 @@ stream.on('tweet', function (tweet) {
 				url: "https://en.wikipedia.org/w/api.php",
 				method: 'GET',
 				qs: {
-					action: 'query',	
+					action: 'query',
 					format: 'json',
 					prop: 'categories',
 					titles: poemTitle
@@ -72,7 +72,8 @@ stream.on('tweet', function (tweet) {
 					url: config.wikisonnet_api_url + "/api/v2/poems",
 					method: 'POST',
 					form: {
-						poemTitle: poemTitle
+						poemTitle: poemTitle,
+						twitterHandle: requestor
 					}
 				},
 				function(err, poemResponse) {
@@ -83,7 +84,7 @@ stream.on('tweet', function (tweet) {
 					if (body.complete) {
 						var child = childProcess.execFile(binPath, childArgs, function(err, stdout, stderr) {
 						  console.log(err);
-						  console.log(stderr);	
+						  console.log(stderr);
 						  console.log(stdout);
 						});
 
@@ -92,7 +93,7 @@ stream.on('tweet', function (tweet) {
 
 						  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
 								var mediaIdStr = data.media_id_string;
-								var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id; 
+								var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id;
 							  var params = { status: status, media_ids: [mediaIdStr] }
 
 							  T.post('statuses/update', params, function (err, data, response) {
@@ -116,7 +117,7 @@ function getPoem(poemId, poemTitle, requestor) {
 	request({
 		url: config.wikisonnet_api_url + "/api/v2/poems/" + poemId,
 		method: 'GET'
-	}, 
+	},
 	function(err, response) {
 		if(err) { console.log(err); return; }
 		var body = JSON.parse(response.body);
@@ -124,7 +125,7 @@ function getPoem(poemId, poemTitle, requestor) {
 			//do all of the posting stuff.
 			var child = childProcess.execFile(binPath, childArgs, function(err, stdout, stderr) {
 			  console.log(err);
-			  console.log(stderr);	
+			  console.log(stderr);
 			  console.log(stdout);
 			});
 
@@ -133,7 +134,7 @@ function getPoem(poemId, poemTitle, requestor) {
 
 			  T.post('media/upload', { media_data: b64content }, function (err, data, response) {
 					var mediaIdStr = data.media_id_string;
-					var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id; 
+					var status = '.@' + requestor + ', here is your poem about ' + poemTitle + '. Read more at ' + config.wikisonnet_url + '/poems/' + body.id;
 				  var params = { status: status, media_ids: [mediaIdStr] }
 
 				  T.post('statuses/update', params, function (err, data, response) {
@@ -149,6 +150,3 @@ function getPoem(poemId, poemTitle, requestor) {
 		}
 	});
 }
-
-
-
