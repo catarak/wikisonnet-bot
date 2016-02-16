@@ -7,6 +7,7 @@ var childProcess = require('child_process');
 var config = require("./config.js")();
 
 var binPath = "xvfb-run";
+// var binPath = slimerjs.path;
 var childArgs = [
 	slimerjs.path,
   path.join(__dirname, 'slimerjs-poem-image.js'),
