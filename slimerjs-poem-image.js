@@ -1,4 +1,5 @@
 var page = require('webpage').create();
+page.sendEvent('mousemove', 0, 0);
 
 var url;
 var system = require('system');
