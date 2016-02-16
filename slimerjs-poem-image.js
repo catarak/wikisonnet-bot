@@ -38,7 +38,7 @@ args.forEach(function(arg, i) {
 });
 
 page.open(url+poemId, function(status) {
-	page.sendEvent('mousemove', 0, 0, 'left',0);
+	page.sendEvent('mousemove', 0, 0);
 });
 
 page.onLoadFinished = function() {
