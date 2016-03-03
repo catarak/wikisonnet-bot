@@ -18,7 +18,7 @@ page.clipRect = {
 	top: 90,
 	left: 190,
 	width: 430,
-	height: 520
+	height: 540
 };
 
 page.settings.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36';
@@ -43,8 +43,14 @@ page.open(url+poemId, function(status) {
 
 page.onLoadFinished = function() {
 	setTimeout(function() {
+		page.evaluate(function() {
+	    $('.poem__line, [class^="poem__line--"], [class*=" poem__line--"]').removeClass("active");
+			$('.poem__line, [class^="poem__line--"], [class*=" poem__line--"]').css("font-size", "0.8rem");
+			$('.poem__line, [class^="poem__line--"], [class*=" poem__line--"]').css("line-height", "0.6rem");
+			$('.share-buttons-wrapper').css("display", "none");
+	  });
 		page.render('screenshot-' + poemId + '.png');
 		phantom.exit();
-	}, 1000);
+	}, 2000);
 
 }
